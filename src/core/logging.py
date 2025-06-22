@@ -1,32 +1,49 @@
 """Модуль содержит основные настройки логирования."""
-# src/core/logging.py
 import logging
 import sys
 
+from colorlog import ColoredFormatter
 
-def setup_logging(level: str = "INFO") -> logging.Logger:
+from schemas.base import config
+
+
+def setup_logging(level: str):
     """
-    Настройка простого консольного логирования
+    Настройка простого консольного логирования.
 
-    Уровни: DEBUG, INFO, WARNING, ERROR, CRITICAL
+    :param level: Глобальный уровень логирования
     """
-    logger = logging.getLogger()
-    logger.setLevel(level.upper())
+    # Расширенный формат с временем и местом вызова
+    log_format = (
+        "%(log_color)s%(asctime)s %(levelname)-8s%(reset)s "  # Время и уровень
+        "%(blue)s%(filename)s:%(lineno)d%(reset)s "  # Файл и строка
+        "%(log_color)s%(message)s%(reset)s"  # Сообщение
+    )
 
-    # Очистка предыдущих обработчиков
-    logger.handlers.clear()
+    # Настройка цветов
+    formatter = ColoredFormatter(
+        log_format,
+        datefmt="%Y-%m-%d %H:%M:%S",
+        log_colors={
+            "DEBUG": "cyan",
+            "INFO": "green",
+            "WARNING": "yellow",
+            "ERROR": "red",
+            "CRITICAL": "red,bg_white",
+        },
+        reset=True,
+        style="%",
+    )
+
+    # Очистка старых обработчиков
+    _logger = logging.getLogger()
+    _logger.handlers.clear()
 
     # Настройка вывода в консоль
     handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(level.upper())
-
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
     handler.setFormatter(formatter)
+    _logger.addHandler(handler)
+    _logger.setLevel(level.upper())
 
-    logger.addHandler(handler)
-    return logger
-
-# Инициализация глобального логгера
-logger = setup_logging("INFO")
+setup_logging(config.LOG_LEVEL)
+logger = logging.getLogger(__name__)
